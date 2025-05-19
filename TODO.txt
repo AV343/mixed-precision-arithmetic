@@ -1,0 +1,6 @@
+TO DO:
+	Implement bit shifts
+	Implement addition
+	(Don't worry about hex-dec conversion)
+	Implement multiplication (Toom 2/3)
+	Implement multiplication in parallel
