@@ -1,6 +1,7 @@
 #include <iostream>
 #include "bigInt.h"
 
+// Constructors
 bigInt::bigInt(std::vector<unsigned int> blocks, bool is_positive){
 	//std::cout << "The size of a boolean is " << sizeof(bool);
 	this->blocks = blocks;
@@ -13,6 +14,7 @@ bigInt::bigInt(int k){
 	this->k = k;
 }
 
+// Getter and setter
 unsigned int bigInt::get_block(int i, unsigned int if_fails){
 	if (i < this->k) return this->blocks[this->k - 1 - i];
 	else return if_fails;
@@ -26,6 +28,8 @@ bool bigInt::set_block(int i, unsigned int n){
 	else return false;
 }
 
+
+// toString
 std::string bigInt::toString(){
 	std::string res;
 	for (int i=0; i<this->k; i++){
@@ -43,53 +47,108 @@ std::string bigInt::toString(){
 	return res;
 }
 
-bigInt operator<<(int n){
-	int num_blocks = this->k;
-	while (n >= 32){
-		n -= 32;
-		num_blocks++;
-	}
-	first_block = this->blocks[0] >> (32-n);
-	if (first_block > 0) num_blocks++;
-	bigInt res = bigInt(num_blocks);
-	res.blocks[0] = first_block;
+// Bit shifts
+bigInt operator<<(const bigInt& a, unsigned int n){
+	unsigned int num_empty = n/32;
+	n %= 32;
+	int k = a.k;
+	bigInt ans = bigInt(k);
+	std::vector<unsigned int> res = ans.blocks;
 
-	// Change res, not the initial number
-	for(int i=1; i<this->k; i++){
-		unsigned int block = this->blocks[i];
-		this->blocks[i] = block << n;
-		if (block >= 0x800000000){
-			this->blocks[i-1] += 1;
-		}
+	// Shifting over the blocks
+	for (int i=0; i<num_empty; i++){
+		res[i] = (i+num_empty > k-1) ? 0 : a.blocks[i+num_empty];
 	}
+
+	// Now we do actual bit shifting by n<32
+	for(int i=0; i<k; i++){
+		unsigned int end = i==k-1 ? 0 : (res[i+1] >> (32-n));
+		res[i] = (res[i] << n) | end;
+	}
+	return ans;
 }
 
-bool operator==(bigInt a, bigInt b){
-	if (a.k != b.k) return false;
+bigInt operator>>(const bigInt& a, unsigned int n){
+	unsigned int num_empty = n/32;
+	n %= 32;
+	int k = a.k;
+	bigInt ans = bigInt(k);
+	std::vector<unsigned int> res = ans.blocks;
+
+	// Shifting over the blocks
+	for (int i = k-1; i >= k-num_empty; i--){
+		res[i] = (i-num_empty < 0) ? 0 : a.blocks[i-num_empty];
+	}
+
+	// Now we do actual bit shifting by n<32
+	for(int i=k-1; i>=0; i--){
+		unsigned int end = i==0 ? 0 : (res[i-1] << (32-n));
+		res[i] = (res[i] >> n) | end;
+	}
+	return ans;
+}
+
+
+// Bitwise logic
+bigInt operator&(const bigInt& a, const bigInt& b){
+	int ma = std::max(a.k, b.k);
+	bigInt res = bigInt(ma);
+	for (int i = 0; i<ma; i++){
+		unsigned int a_block = a.k-1-i<0 ? 0 : a.blocks[a.k-1-i];
+		unsigned int b_block = b.k-1-i<0 ? 0 : b.blocks[b.k-1-i];
+		res.blocks[ma-1-i] = a_block & b_block;
+	}
+	return res;
+}
+
+bigInt operator|(const bigInt& a, const bigInt& b){
+	int ma = std::max(a.k, b.k);
+	bigInt res = bigInt(ma);
+	for (int i = 0; i<ma; i++){
+		unsigned int a_block = a.k-1-i<0 ? 0 : a.blocks[a.k-1-i];
+		unsigned int b_block = b.k-1-i<0 ? 0 : b.blocks[b.k-1-i];
+		res.blocks[ma-1-i] = a_block | b_block;
+	}
+	return res;
+}
+
+bigInt operator^(const bigInt& a, const bigInt& b){
+	int ma = std::max(a.k, b.k);
+	bigInt res = bigInt(ma);
+	for (int i = 0; i<ma; i++){
+		unsigned int a_block = a.k-1-i<0 ? 0 : a.blocks[a.k-1-i];
+		unsigned int b_block = b.k-1-i<0 ? 0 : b.blocks[b.k-1-i];
+		res.blocks[ma-1-i] = a_block ^ b_block;
+	}
+	return res;
+}
+
+// Equality/Inequality testing
+bool operator==(const bigInt& a, const bigInt& b){
 	for (int i=0; i<a.k; i++){
 		if (a.blocks[i] != b.blocks[i]) return false;
 	}
 	return true;
 }
 
-bool operator!=(bigInt a, bigInt b){
-	if (a.k != b.k) return true;
+bool operator!=(const bigInt& a, const bigInt& b){
 	for (int i=0; i<a.k; i++){
 		if (a.blocks[i] != b.blocks[i]) return true;
 	}
 	return false;
 }
 
-bigInt operator&(bigInt a, bigInt b){
-	pass
-}
-
+// Arithmetic operators
 bigInt operator+(bigInt a, bigInt b){
 	while (b!=0){
-		int carry = 
+		bigInt carry = a & b;
+		a = a^b;
+		b = carry << 1;
 	}
+	return a;
 }
 
+/*
 bigInt operator+2(bigInt a, bigInt b){
 	std::cout << "Starting add" << std::endl;
 	int new_k = std::max(a.k, b.k);
@@ -113,7 +172,9 @@ bigInt operator+2(bigInt a, bigInt b){
 	if (add_again) return c + carries;
 	else return c;
 }
+*/
 
+/*
 bigInt toom3(bigInt m, bigInt n){
 	m_split = split(m, 3);
 	m0 = m_split[0];
@@ -140,3 +201,4 @@ bigInt toom3(bigInt m, bigInt n){
 	qinf = n2;
 
 }
+*/

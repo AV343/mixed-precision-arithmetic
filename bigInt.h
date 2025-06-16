@@ -15,9 +15,21 @@ class bigInt{
 		unsigned int get_block(int i, unsigned int if_fails=0);
 		bool set_block(int i, unsigned int n);
 		std::string toString();
-	
-	friend bigInt operator+(bigInt a, bigInt b);
-	friend bigInt operator<<(bigInt a, int n);
+		
+		friend bigInt operator<<(const bigInt& a, unsigned int n);
+		friend bigInt operator>>(const bigInt& a, unsigned int n);
+
+		friend bigInt operator&(const bigInt& a, const bigInt& b);
+		friend bigInt operator|(const bigInt& a, const bigInt& b);
+		friend bigInt operator^(const bigInt& a, const bigInt& b);
+
+		friend bool operator==(const bigInt& a, const bigInt& b);
+		friend bool operator!=(const bigInt& a, const bigInt& b);
+
+		friend bigInt operator+(bigInt a, bigInt b);
+		friend bigInt operator-(bigInt a, bigInt b);
+		friend bigInt operator*(bigInt a, bigInt b);
+		//friend bigInt operator**(bigInt a, bigInt b);
 };
 
 #endif
